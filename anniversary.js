@@ -20,34 +20,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Function to load fonts
     async function loadFonts() {
         console.log("Starting font loading...");
-        
-        // 1. Wait for fonts already defined in CSS (like Poppins from Google Fonts)
+
+        // 1. Wait for document fonts initially
         try {
             await document.fonts.ready;
-            console.log("Google Fonts (or CSS fonts) ready.");
         } catch (e) {
-            console.warn("Initial document.fonts.ready failed, continuing...", e);
+            console.warn("Initial fonts ready wait failed", e);
         }
 
-        // 2. Load local fonts explicitly for Canvas
-        const fonts = [
-            new FontFace('Scriptina', 'url(font/scriptin.ttf)'),
-            new FontFace('Fredoka', 'url(font/fredoka-regular.ttf)', { weight: '400' }),
-            new FontFace('Fredoka', 'url(font/fredoka-bold.ttf)', { weight: '700' }),
-            new FontFace('Fredoka SemiExpanded', 'url(font/fredoka_semiexpanded-regular.ttf)')
+        // 2. Define local fonts
+        const fontsToLoad = [
+            { family: 'Scriptina', url: 'font/scriptin.ttf' },
+            { family: 'Fredoka', url: 'font/fredoka-regular.ttf', weight: '400' },
+            { family: 'Fredoka', url: 'font/fredoka-bold.ttf', weight: '700' },
+            { family: 'FredokaSemiExpanded', url: 'font/fredoka_semiexpanded-regular.ttf' }
         ];
 
-        try {
-            const loaded = await Promise.all(fonts.map(f => f.load()));
-            loaded.forEach(f => document.fonts.add(f));
-            console.log("Local fonts loaded and added.");
-            
-            // Wait again to be sure everything is synchronized
-            await document.fonts.ready;
-            console.log("All fonts synchronized and ready.");
-        } catch (e) {
-            console.error("Font loading error:", e);
+        // 3. Load all explicitly
+        for (const fontInfo of fontsToLoad) {
+            try {
+                const font = new FontFace(fontInfo.family, `url(${fontInfo.url})`, { weight: fontInfo.weight || '400' });
+                const loadedFont = await font.load();
+                document.fonts.add(loadedFont);
+                console.log(`Loaded font: ${fontInfo.family}`);
+            } catch (err) {
+                console.error(`Failed to load font ${fontInfo.family}:`, err);
+            }
         }
+
+        // 4. Final synchronization
+        await document.fonts.ready;
+        console.log("All fonts synchronized.");
+
+        // 5. "Warm up" draw - sometimes needed for Canvas to recognize newly added fonts
+        const warmUpCtx = document.createElement('canvas').getContext('2d');
+        warmUpCtx.font = "10px Scriptina";
+        warmUpCtx.fillText("a", 0, 0);
+        warmUpCtx.font = "10px Fredoka";
+        warmUpCtx.fillText("a", 0, 0);
+        warmUpCtx.font = "10px FredokaSemiExpanded";
+        warmUpCtx.fillText("a", 0, 0);
+        warmUpCtx.font = "10px Poppins";
+        warmUpCtx.fillText("a", 0, 0);
     }
 
     // Wrap text function
@@ -219,25 +233,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.fillStyle = textGrad;
 
         // Draw Year
-        ctx.font = '700 73px Poppins, sans-serif';
+        ctx.font = '700 73px "Poppins", sans-serif';
         const yearText = state.year;
         ctx.fillText(yearText, titleX, titleY);
         const yearWidth = ctx.measureText(yearText).width;
 
         // Draw Suffix
-        ctx.font = '400 60px Poppins, sans-serif';
+        ctx.font = '400 60px "Poppins", sans-serif';
         const suffixText = state.suffix;
         ctx.fillText(suffixText, titleX + yearWidth, titleY + 10); // slightly lower baseline align? or same
 
         // Draw "Work Anniversary"
         // CSS says block display, so new line
-        ctx.font = '600 60px Poppins, sans-serif';
+        ctx.font = '600 60px "Poppins", sans-serif';
         ctx.fillText("Work", titleX, titleY + 80);
         ctx.fillText("Anniversary", titleX, titleY + 140);
 
         // 6. Quote
         // CSS: margin-top 10px, max-width 370px, font 26px Poppins, color #8D8D8D
-        ctx.font = '26px Poppins, sans-serif';
+        ctx.font = '26px "Poppins", sans-serif';
         ctx.fillStyle = '#707070';
         const quoteY = titleY + 230;
         wrapText(ctx, state.quote, titleX, quoteY, 340, 36);
@@ -346,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             // Placeholder text
             ctx.fillStyle = "#aaaaaa";
-            ctx.font = "30px Poppins";
+            ctx.font = '30px "Poppins", sans-serif';
             ctx.textAlign = "center";
             ctx.fillText("Upload Image", 0, -50); // relative to center due to translate
         }
@@ -354,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Draw Name
         // Bottom area
         ctx.fillStyle = "#707070";
-        ctx.font = "400 38px 'Fredoka SemiExpanded', sans-serif";
+        ctx.font = '400 38px "FredokaSemiExpanded", sans-serif';
         ctx.textAlign = "center";
 
         // Center text in the bottom whitespace
@@ -367,12 +381,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Auto-scale text to fit imgW
         const allowedWidth = imgW; // 24px padding each side already accounted for in imgW
 
-        ctx.font = "400 38px 'Fredoka SemiExpanded', sans-serif";
+        ctx.font = '400 38px "FredokaSemiExpanded", sans-serif';
         let textMetrics = ctx.measureText(state.name);
 
         if (textMetrics.width > allowedWidth) {
             // Reduce to 28px if too wide
-            ctx.font = "400 28px 'Fredoka SemiExpanded', sans-serif";
+            ctx.font = '400 28px "FredokaSemiExpanded", sans-serif';
         }
 
         ctx.fillText(state.name, 0, nameY);
@@ -389,32 +403,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.textAlign = "left";
 
         // Designation - with auto-scaling
-        ctx.font = "800 36px Poppins, sans-serif";
+        ctx.font = '800 36px "Poppins", sans-serif';
         if (ctx.measureText(state.designation).width > maxDetailsWidth) {
-            ctx.font = "800 32px Poppins, sans-serif";
+            ctx.font = '800 32px "Poppins", sans-serif';
             if (ctx.measureText(state.designation).width > maxDetailsWidth) {
-                ctx.font = "800 28px Poppins, sans-serif";
+                ctx.font = '800 28px "Poppins", sans-serif';
             }
         }
         ctx.fillText(state.designation, detailsX, detailsY);
 
         // Department - with auto-scaling
-        ctx.font = "200 30px Poppins, sans-serif";
+        ctx.font = '200 30px "Poppins", sans-serif';
         if (ctx.measureText(state.department).width > maxDetailsWidth) {
-            ctx.font = "200 28px Poppins, sans-serif";
+            ctx.font = '200 28px "Poppins", sans-serif';
             if (ctx.measureText(state.department).width > maxDetailsWidth) {
-                ctx.font = "200 24px Poppins, sans-serif";
+                ctx.font = '200 24px "Poppins", sans-serif';
             }
         }
         ctx.fillText(state.department, detailsX, detailsY + 50);
 
         // DOJ
-        ctx.font = "500 20px Poppins, sans-serif";
+        ctx.font = '500 20px "Poppins", sans-serif';
         ctx.fillText("DOJ : " + state.doj, detailsX, detailsY + 100);
 
         // 9. Footer
         // Bottom right
-        ctx.font = "24px Poppins, sans-serif";
+        ctx.font = '24px "Poppins", sans-serif';
         ctx.fillStyle = "#707070"; // or white depending on bg
         ctx.textAlign = "right";
         ctx.fillText("www.kudometrics.com", 1020, 1020);
@@ -611,4 +625,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial Draw
     drawCanvas();
     toggleImageEditingSection();
+
+    // Final defensive redraw after assets definitely loaded
+    setTimeout(drawCanvas, 1000);
 });
