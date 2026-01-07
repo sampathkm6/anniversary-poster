@@ -20,7 +20,7 @@
 }
 
 @font-face {
-    font-family: 'Fredoka SemiExpanded';
+    font-family: 'FredokaSemiExpanded';
     src: url('font/fredoka_semiexpanded-regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
@@ -489,7 +489,7 @@ body {
     font-family: var(--font-main);
     /* Or script if preferred, ref looks like specialized font */
     /* Ref actually looks like clean sans-serif but customized. Let's stick to Poppins Light/Reg */
-    font-family: 'Fredoka SemiExpanded';
+    font-family: 'FredokaSemiExpanded';
     font-style: normal;
     font-weight: 400;
     font-size: 38px;
