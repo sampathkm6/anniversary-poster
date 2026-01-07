@@ -19,17 +19,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Function to load fonts
     async function loadFonts() {
-        // We rely on CSS loading for now, but to be safe for canvas:
+        console.log("Starting font loading...");
+        
+        // 1. Wait for fonts already defined in CSS (like Poppins from Google Fonts)
+        try {
+            await document.fonts.ready;
+            console.log("Google Fonts (or CSS fonts) ready.");
+        } catch (e) {
+            console.warn("Initial document.fonts.ready failed, continuing...", e);
+        }
+
+        // 2. Load local fonts explicitly for Canvas
         const fonts = [
-            new FontFace('Scriptina', 'url(Font/SCRIPTIN.ttf)'),
-            new FontFace('Fredoka', 'url(Font/Fredoka-Regular.ttf)', { weight: '400' }),
-            new FontFace('Fredoka', 'url(Font/Fredoka-Bold.ttf)', { weight: '700' }),
-            new FontFace('Fredoka SemiExpanded', 'url(Font/Fredoka_SemiExpanded-Regular.ttf)')
+            new FontFace('Scriptina', 'url(font/scriptin.ttf)'),
+            new FontFace('Fredoka', 'url(font/fredoka-regular.ttf)', { weight: '400' }),
+            new FontFace('Fredoka', 'url(font/fredoka-bold.ttf)', { weight: '700' }),
+            new FontFace('Fredoka SemiExpanded', 'url(font/fredoka_semiexpanded-regular.ttf)')
         ];
 
         try {
             const loaded = await Promise.all(fonts.map(f => f.load()));
             loaded.forEach(f => document.fonts.add(f));
+            console.log("Local fonts loaded and added.");
+            
+            // Wait again to be sure everything is synchronized
+            await document.fonts.ready;
+            console.log("All fonts synchronized and ready.");
         } catch (e) {
             console.error("Font loading error:", e);
         }
